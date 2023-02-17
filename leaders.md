@@ -1,2 +1,2 @@
 ### Leaders
-* [Michael Rosenfeld](mailto:michaeljrosenfeld22@gmail.com)
+* [Michael Rosenfeld](mailto:RoseSecurityConsulting@proton.me)
