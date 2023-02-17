@@ -1,0 +1,4 @@
+scipy
+pandas
+PyPDF2
+textract
