@@ -1,17 +1,4 @@
-### ScrapPy Information
-* [Incubator Project](#)
-* [Type of Project](#)
-* [Version 0.0.0](#)
-* [Builder](#)
-* [Breaker](#)
-
-### Downloads or Social Links
-* [Download](#)
-* [Meetup](#)
-
 ### Code Repository
-* [repo](#)
+* [Repository](https://github.com/OWASP/www-project-scrappy)
 
-### Change Log
-* [changes](#)
 
