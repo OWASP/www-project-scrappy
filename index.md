@@ -10,7 +10,7 @@ pitch: ScrapPY is a Python utility for scraping manuals, documents, and other se
 ---
 
 <p align="center">
-<img width=40% height=40% src="https://user-images.githubusercontent.com/72598486/200046477-94c17a93-2dc8-418b-96eb-2b554227dce2.png">
+<img width=40% height=40% src="/assets/images/doggo.png">
 </p>
 
 # ScrapPY: PDF Scraping Made Easy
