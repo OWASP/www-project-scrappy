@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ScrapPY Web Interface</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .container {
+        border: 1px solid #ccc;
+        padding: 20px;
+        border-radius: 5px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input[type="text"],
+      input[type="password"],
+      select {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      #login-section,
+      #job-section,
+      #result-section {
+        margin-bottom: 30px;
+      }
+      .hidden {
+        display: none;
+      }
+      pre {
+        background: #f4f4f4;
+        padding: 10px;
+        overflow-x: auto;
+      }
+      .error {
+        color: red;
+      }
+      .success {
+        color: green;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ScrapPY Web Interface</h1>
+
+    <div id="login-section" class="container">
+      <h2>Login</h2>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="username" value="admin" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" value="password123" />
+      </div>
+      <button onclick="login()">Login</button>
+      <p id="login-msg"></p>
+    </div>
+
+    <div id="job-section" class="container hidden">
+      <h2>New Scan Job</h2>
+      <div class="form-group">
+        <label>PDF File</label>
+        <input type="file" id="pdf-file" accept=".pdf" />
+      </div>
+      <div class="form-group">
+        <label>Mode</label>
+        <select id="mode">
+          <option value="word-frequency">Word Frequency</option>
+          <option value="full">Full Extraction</option>
+          <option value="metadata">Metadata</option>
+          <option value="entropy">Entropy Analysis</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="consent" /> I explicitly consent to
+          scanning this file and understand the security implications.
+        </label>
+      </div>
+      <button onclick="submitJob()">Submit Job</button>
+      <p id="job-msg"></p>
+    </div>
+
+    <div id="result-section" class="container hidden">
+      <h2>Job Results</h2>
+      <div id="results-container"></div>
+    </div>
+
+    <script>
+      let token = localStorage.getItem("access_token");
+      const API_BASE = "/api/v1";
+
+      if (token) {
+        showJobSection();
+      }
+
+      async function login() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const formData = new FormData();
+        formData.append("username", username);
+        formData.append("password", password);
+
+        try {
+          const response = await fetch(`${API_BASE}/auth/token`, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) throw new Error("Login failed");
+
+          const data = await response.json();
+          token = data.access_token;
+          localStorage.setItem("access_token", token);
+          showJobSection();
+        } catch (err) {
+          document.getElementById("login-msg").className = "error";
+          document.getElementById("login-msg").innerText = err.message;
+        }
+      }
+
+      function showJobSection() {
+        document.getElementById("login-section").classList.add("hidden");
+        document.getElementById("job-section").classList.remove("hidden");
+        document.getElementById("result-section").classList.remove("hidden");
+      }
+
+      async function submitJob() {
+        const fileInput = document.getElementById("pdf-file");
+        const mode = document.getElementById("mode").value;
+        const consent = document.getElementById("consent").checked;
+
+        if (!fileInput.files[0]) {
+          alert("Please select a file");
+          return;
+        }
+        if (!consent) {
+          alert("You must provide consent");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        formData.append("mode", mode);
+        formData.append("consent_acknowledged", consent);
+
+        try {
+          const response = await fetch(`${API_BASE}/jobs`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || "Job submission failed");
+          }
+
+          const data = await response.json();
+          document.getElementById("job-msg").className = "success";
+          document.getElementById(
+            "job-msg"
+          ).innerText = `Job submitted! ID: ${data.job_id}`;
+          pollJob(data.job_id);
+        } catch (err) {
+          document.getElementById("job-msg").className = "error";
+          document.getElementById("job-msg").innerText = err.message;
+        }
+      }
+
+      async function pollJob(jobId) {
+        const container = document.getElementById("results-container");
+        container.innerHTML = `<p>Polling job ${jobId}...</p>`;
+
+        const interval = setInterval(async () => {
+          try {
+            const response = await fetch(`${API_BASE}/jobs/${jobId}/result`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (response.status === 400) {
+              // Job not finished yet
+              return;
+            }
+
+            clearInterval(interval);
+            const data = await response.json();
+
+            let html = `<h3>Status: ${data.status}</h3>`;
+            if (data.error) {
+              html += `<p class="error">Error: ${data.error}</p>`;
+            } else {
+              html += `<pre>${data.output.join("\n")}</pre>`;
+            }
+            container.innerHTML = html;
+          } catch (err) {
+            clearInterval(interval);
+            container.innerHTML = `<p class="error">Polling failed: ${err.message}</p>`;
+          }
+        }, 2000);
+      }
+    </script>
+  </body>
+</html>

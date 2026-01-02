@@ -6,7 +6,6 @@ from datetime import datetime
 import pandas as pd
 import argparse
 import PyPDF2
-import textract
 import time
 import re
 import sys
@@ -42,17 +41,17 @@ def read_file():
     # Open provided file
     global common_words
     pdf_file = open(args.file, 'rb')
-    read_pdf = PyPDF2.PdfFileReader(pdf_file)
-    page_nums = int(read_pdf.numPages)
+    read_pdf = PyPDF2.PdfReader(pdf_file)
+    page_nums = len(read_pdf.pages)
 
     # Loop through each page and convert to text
     loop_count = 0
     page_text = " "
 
     while loop_count < page_nums:
-        page_obj = read_pdf.getPage(loop_count)
+        page_obj = read_pdf.pages[loop_count]
         loop_count += 1
-        page_text += page_obj.extractText()
+        page_text += page_obj.extract_text()
 
     # Lowercase each word
     page_text = str(page_text.encode('ascii','ignore').lower())
@@ -84,8 +83,8 @@ def mode(keywords):
         output_file(keywords)
     if args.mode == "metadata":
         with open(args.file, 'rb') as pdf_file:
-            read_pdf = PyPDF2.PdfFileReader(pdf_file)
-            pdf_info = read_pdf.getDocumentInfo()
+            read_pdf = PyPDF2.PdfReader(pdf_file)
+            pdf_info = read_pdf.metadata
             author = pdf_info.author
             creator = pdf_info.creator
             producer = pdf_info.producer

@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  scrappy-web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # REQUIRED: Generate with: python -c "import secrets; print(secrets.token_hex(32))"
+      - SCRAPPY_SECRET_KEY=${SCRAPPY_SECRET_KEY:?Set SCRAPPY_SECRET_KEY in .env}
+      - SCRAPPY_MAX_FILE_SIZE_MB=10
+      - SCRAPPY_LOGIN_RATE_LIMIT=5/minute
+      - SCRAPPY_JOB_RATE_LIMIT=10/minute
+    volumes:
+      # Persist uploads (optional, remove for ephemeral storage)
+      - scrappy_uploads:/app/temp_uploads
+    restart: unless-stopped
+    # Security: Read-only filesystem except for uploads
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  scrappy_uploads:

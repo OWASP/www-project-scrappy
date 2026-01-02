@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-multipart
+python-jose[cryptography]
+passlib[bcrypt]
+slowapi
+aiofiles
+bcrypt
+pytest
+httpx
