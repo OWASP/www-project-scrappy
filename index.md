@@ -3,7 +3,7 @@
 layout: col-sidebar
 title: OWASP ScrapPy
 tags: scraping recon osint owasp pdf discovery
-level: 4
+level: 2
 type: tool
 pitch: ScrapPY is a Python utility for scraping manuals, documents, and other sensitive PDFs to generate targeted wordlists that can be utilized by offensive security tools to perform brute force, forced browsing, and dictionary attacks.
 
